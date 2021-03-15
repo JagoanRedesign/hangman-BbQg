@@ -71,12 +71,12 @@ class User:
             self.referer = None
             # проверяем, перешел ли пользователь по реферальной ссылке
             if message and message.text.startswith('/start'):
-                referer_temp = message.text.split()[1]
-                if User.check_user_by_id(user_id=referer_temp):
-                    self.referer = int(referer_temp)
+                referer_temp_row = message.text.split()
+                if len(referer_temp_row) == 2 and User.check_user_by_id(user_id=referer_temp_row[1]):
+                    self.referer = int(referer_temp_row[1])
 
                     # отправляем уведомление рефоводу о новом реферале
-                    asyncio.create_task(notification.new_referal(user_referer_id=referer_temp, name_referal=self.name))
+                    asyncio.create_task(notification.new_referal(user_referer_id=referer_temp_row[1], name_referal=self.name))
 
             # регистируем пользователя
             self.db.insert('user', {'user_id': self.user_id, 'name': self.name, 'referer': self.referer})
