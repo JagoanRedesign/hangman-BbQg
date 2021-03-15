@@ -6,9 +6,8 @@
 https://t.me/xHangmanBot
 # Config
 В файле `config.py` содержатся первоначальные настройки бота:
-
-```TOKEN = 'Токен вашего бота в telegram'```
-
-```NAME_DAABASE = 'Путь до вашей БД SQLite3'``` 
-
-```BOT_USERNAME = 'Username вашего бота'```
+```
+TOKEN = 'Токен вашего бота в telegram'
+NAME_DAABASE = 'Путь до вашей БД SQLite3'
+BOT_USERNAME = 'Username вашего бота'
+```
