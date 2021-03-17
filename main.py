@@ -7,7 +7,7 @@ from config import TOKEN
 from handlers.handler_registrator import register_handlers
 
 # подключаем логирование
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 # создаем бота и диспатчер
 bot = Bot(token=TOKEN, parse_mode='MarkdownV2')

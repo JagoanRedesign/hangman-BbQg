@@ -76,7 +76,8 @@ class User:
                     self.referer = int(referer_temp_row[1])
 
                     # отправляем уведомление рефоводу о новом реферале
-                    asyncio.create_task(notification.new_referal(user_referer_id=referer_temp_row[1], name_referal=self.name))
+                    asyncio.create_task(
+                        notification.new_referal(user_referer_id=referer_temp_row[1], name_referal=self.name))
 
             # регистируем пользователя
             self.db.insert('user', {'user_id': self.user_id, 'name': self.name, 'referer': self.referer})

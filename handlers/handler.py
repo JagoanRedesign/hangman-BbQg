@@ -2,7 +2,7 @@ from aiogram.types import Message, InlineKeyboardMarkup, CallbackQuery
 
 from image import get_image
 from text import text
-from . import handler_decorates
+from handlers import handler_decorates
 from user import User
 from aiogram.types import ReplyKeyboardMarkup, InputMediaPhoto
 from config import BOT_USERNAME
@@ -31,11 +31,7 @@ async def send_photo(
         return False
         pass
     else:
-        if not isinstance(photo, str):
-            db = DataBase()
-            select = db.select(table='photo', where={'file_id': sent.photo[0].file_id})
-            if not select:
-                db.insert(table='photo', data={'photo': photo.name, 'file_id': sent.photo[0].file_id})
+        cashing_photo(photo, sent)
     return True
 
 
@@ -59,12 +55,24 @@ async def edit_media(
         print(e)
         return False
     else:
-        if not isinstance(photo, str):
-            db = DataBase()
-            select = db.select(table='photo', where={'file_id': sent.photo[0].file_id})
-            if not select:
-                db.insert(table='photo', data={'photo': photo.name, 'file_id': sent.photo[0].file_id})
+        cashing_photo(photo, sent)
     return True
+
+
+def cashing_photo(photo, sent) -> bool:
+    """
+    Кэширует изображение в базе данных
+    :param photo:
+    :param sent: отправленное сообщение с фото
+    :return: True - кэширование удалось, False - переданный тип изображение не является строкой.
+    """
+    if not isinstance(photo, str):
+        db = DataBase()
+        select = db.select(table='photo', where={'file_id': sent.photo[0].file_id})
+        if not select:
+            db.insert(table='photo', data={'photo': photo.name, 'file_id': sent.photo[0].file_id})
+        return True
+    return False
 
 
 @handler_decorates.get_user
@@ -153,10 +161,10 @@ async def press_button(callback: CallbackQuery, user: User):
             pass
 
         msg, keyboard, photo = game.get_game_content()
-        if code == -1:
-            await edit_media(message=callback.message, photo=photo, caption=msg, keyboard=keyboard)
-        elif code == -2:
+        if code == -2:
             await edit_media(message=callback.message, photo=photo, caption=msg)
+        elif code == -1:
+            await edit_media(message=callback.message, photo=photo, caption=msg, keyboard=keyboard)
         elif code == 1:
             await callback.message.edit_caption(caption=msg, reply_markup=keyboard)
         elif code == 2:
