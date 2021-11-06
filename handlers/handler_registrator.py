@@ -10,8 +10,10 @@ def register_handlers(dp: Dispatcher) -> True:
     """
     Регистрирует все хэндлеры для отлова сообщений
 
-    :param dp:
-    :return:
+    Args:
+        dp: диспатчер
+    Return:
+        флаг сигнализирующий об успешном выполнении функции
     """
     dp.register_message_handler(callback=handler.start_game, regexp=text.main_menu[0])
     dp.register_message_handler(callback=handler.show_records, regexp=text.main_menu[1])

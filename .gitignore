@@ -1,0 +1,8 @@
+/log.txt
+/words
+/filters
+/.idea
+db/__pycache__
+text/__pycache__
+handlers/__pycache__
+/__pycache__

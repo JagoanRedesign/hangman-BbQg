@@ -1,3 +1,5 @@
+from typing import Optional, Union
+
 from db.db import DataBase
 import logging
 from aiogram.types import Message, User as TUser, CallbackQuery
@@ -18,14 +20,20 @@ class UserNotFound(Exception):
 class User:
     __slots__ = ['user_id', 'name', 'db', 'referer']
 
-    def __init__(self, user_id: [int, str] = None, message: Message = None,
-                 user: TUser = None, callback: CallbackQuery = None):
+    def __init__(
+            self,
+            user_id: Union[int, str, None] = None,
+            message: Optional[Message] = None,
+            user: Optional[TUser] = None,
+            callback: Optional[CallbackQuery] = None
+    ):
         """
         Инициализация пользователя.
 
-        :param user_id: пользовательский user_id в телеграм.
-        :param message: объект типа message, из которого можно будет получить данные об отправителе
-        :param user: объект типа user от aiogram
+        Args:
+            user_id: пользовательский user_id в телеграм.
+            message: объект типа message, из которого можно будет получить данные об отправителе
+            user: объект типа user от aiogram
         """
         if user_id is None and message is None and user is None and callback is None:
             raise CreatingUserException("Не задан ни один параметр для инициализации")
@@ -50,19 +58,21 @@ class User:
             self.user_id = user.id
             self.name = user.full_name
 
-        # создаем экземляр класса DateBase, для работы с БД
+        # создаем экземпляр класса DateBase, для работы с БД
         self.db = DataBase()
 
-        # проверяем, есть ли пользователь в бд (зарегистирован ли он) и при необходимости регистирует его
+        # проверяем, есть ли пользователь в бд (зарегистрирован ли он) и при необходимости регистрирует его
         self._check_register(message)
 
-    def _check_register(self, message: Message = None) -> bool:
+    def _check_register(self, message: Optional[Message] = None) -> bool:
         """
         Проверяет, был ли зарегистрирован пользователь. Если нет, регистирирует его
 
-        :param message: параметр message из которого можно получить информацию о переходе по реферальной ссылке.
+        Args:
+            message: параметр message из которого можно получить информацию о переходе по реферальной ссылке.
 
-        :return: Возвращает True, если пользователь был зарегистирован и False, если не был.
+        Return:
+             Возвращает True, если пользователь был зарегистрирован и False, если не был.
         """
         user_register = self.db.select(table='user', select_data='name', where={'user_id': self.user_id})
 
@@ -79,25 +89,23 @@ class User:
                     asyncio.create_task(
                         notification.new_referal(user_referer_id=referer_temp_row[1], name_referal=self.name))
 
-            # регистируем пользователя
+            # регистрируем пользователя
             self.db.insert('user', {'user_id': self.user_id, 'name': self.name, 'referer': self.referer})
 
             logger.info(f'Новый пользователь! Имя: {self.name}; '
                         f'user_id: {self.user_id}; referer: {self.referer}')
 
-            # пользователь не был зарегистирован
+            # пользователь не был зарегистрирован
             return False
 
         # пользователь был зарегистрирован. Берем данные из БД
         self._get_data_from_db()
         return True
 
-    def _get_data_from_db(self) -> None:
+    def _get_data_from_db(self):
         """
         Получаем данные из бд.
         Проверяем, необходимо ли зарегистрировать пользователя или обновить имя пользователя в БД.
-
-        :return: None
         """
         select = self.db.select(table='user', select_data=['name', 'referer'], where={'user_id': self.user_id})
 
@@ -113,24 +121,25 @@ class User:
             # если у пользователя новое имя, обновляем его в БД
             self._update_name()
 
-        # берем иформацию о реферере
+        # берем информацию о реферере
         self.referer = select[1]
 
-    def _update_name(self) -> None:
+    def _update_name(self):
         """
         Обновляет имя пользователя в БД
 
-        :return:
         """
         self.db.update(table='user', data={'name': self.name}, where={'user_id': self.user_id})
 
     @staticmethod
-    def check_user_by_id(user_id: (int, str)) -> bool:
+    def check_user_by_id(user_id: Union[int, str]) -> bool:
         """
-        Проверяет был ли зарегистирован пользователь с указанным user_id
-        :param user_id: уникальный идентификатор пользователя в Telegram
+        Проверяет был ли зарегистрирован пользователь с указанным user_id
+        Args:
+            user_id: уникальный идентификатор пользователя в Telegram
 
-        :return: True - пользователь зарегистирован; False - не зарегистирован
+        Return:
+            True - пользователь зарегистрирован; False - не зарегистрирован
         """
         if not isinstance(user_id, (str, int)):
             raise ValueError('Неверный тип данных')
@@ -138,5 +147,3 @@ class User:
         db = DataBase()
         select = db.select(table='user', where={'user_id': user_id})
         return True if select else False
-
-

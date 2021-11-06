@@ -1,5 +1,6 @@
 import sqlite3
 import logging
+from typing import Optional, Union
 from config import NAME_DATABASE
 
 logger = logging.getLogger('DB')
@@ -21,8 +22,12 @@ class DataBase:
     def check_table_name(t_name) -> str:
         """
         Проверяет название таблицы на соответствие типу str. В противном случае вызывает исключение.
-        :param t_name: название таблицы
-        :return: True, если имя таблицы строка, иначе выкидывает исключение
+        Args:
+            t_name: название таблицы
+        Return:
+            True, если имя таблицы str
+        Raise:
+            ErrorTableName: некорректное имя таблицы
         """
         if not isinstance(t_name, str):
             raise ErrorTableName(f'Некорректное имя таблицы. Был получен тип: {type(t_name)}, а нужна строка!')
@@ -43,8 +48,10 @@ class DataBase:
         """
         Преобразует словарь в строку для создания конструкции WHERE
 
-        :param d: словарь, который будет преобразован в строку
-        :return: строка в формате 'ключ=значение, клич2=значение2...'
+        Args:
+            d: словарь, который будет преобразован в строку
+        Return:
+             строка в формате 'ключ=значение, клич2=значение2...'
         """
         if not isinstance(d, dict):
             raise TypeError("Полученный параметр не является словарем")
@@ -67,8 +74,10 @@ class DataBase:
         """
         Преобразует словарь в строку для создания конструкции WHERE
 
-        :param d: словарь, который будет преобразован в строку
-        :return: строка в формате 'ключ=значение, клич2=значение2...'
+        Args:
+            d: словарь, который будет преобразован в строку
+        Return:
+             строка в формате 'ключ=значение, клич2=значение2...'
         """
         if not isinstance(d, dict):
             raise TypeError("Полученный параметр не является словарем")
@@ -86,14 +95,15 @@ class DataBase:
                 result += f'{value}'
         return result
 
-
     @staticmethod
     def prepare_insert(d: dict) -> str:
         """
         Преобразует словарь в строку для вставки или обновления данных в таблице
 
-        :param d: словарь, который будет преобразован в строку
-        :return: строка в формате (ключ, ключ2...) VALUES(значение1, значение2...)'
+        Args:
+            d: словарь, который будет преобразован в строку
+        Return:
+             строка в формате (ключ, ключ2...) VALUES(значение1, значение2...)'
         """
         if not isinstance(d, dict):
             raise TypeError("Полученный параметр не является словарем")
@@ -116,14 +126,16 @@ class DataBase:
         return f'({result_keys}) VALUES({result_values})'
 
     @staticmethod
-    def prepare_select(data: [tuple, list, str]) -> str:
+    def prepare_select(data: Union[tuple, list, str]) -> str:
         """
         Преобразует список или кортеж в строку состоящую из элементов исчесляемого типа разделенных запятой.
         Если входящий параметр уже является строкой, то просто возвращает его.
         Используется для запосов в БД после ключевого слова WHERE и для получения списка значений SELECT.
 
-        :param data: данные для подготовки в строку
-        :return: возвращает подготовленную строку для запроса в БД
+        Args:
+            data: данные для подготовки в строку
+        Return:
+            подготовленная безопасная строка для запроса в БД
         """
         # проверяем where на корректность
         if not isinstance(data, (tuple, str, list)):
@@ -137,10 +149,11 @@ class DataBase:
     def insert(self, table: str, data: dict) -> int:
         """
         Вставляет новою запись в указанную таблицу table.
-
-        :param table: таблица, куда нужно вставить запись
-        :param data: данные, которые необходимо занести в таблицу
-        :return: id вставленного элемента
+        Args:
+            table: таблица, куда нужно вставить запись
+            data: данные, которые необходимо занести в таблицу
+        Return:
+             int: целочисленный идентификатор вставленного элемента
         """
         self.check_table_name(table)
         data = self.prepare_insert(data)
@@ -152,17 +165,22 @@ class DataBase:
         return res.lastrowid
 
     def select(
-            self, table: str, select_data: [list, tuple, str] = '*',
-            where: [dict, str] = None, need_all_rows: bool = False) -> list:
+            self,
+            table: str,
+            select_data: Union[list, tuple, str] = '*',
+            where: Union[dict, str, None] = None,
+            need_all_rows: bool = False)\
+            -> list:
         """
         Выполняем SELECT.
         Возвращает значение из таблицы, если оно было найдено или None, если не были найдены нужные значения.
-
-        :param table: название таблицы
-        :param select_data: значения, которые необходимо взять. По умолчанию * - все
-        :param where: условие WHERE
-        :param need_all_rows: нужны ли все строки (True) или только одна (False - по умолчанию)
-        :return: None
+        Args:
+            table: название таблицы
+            select_data: значения, которые необходимо взять. По умолчанию * - все
+            where: условие WHERE
+            need_all_rows: нужны ли все строки (True) или только одна (False - по умолчанию)
+        Return:
+             list: данные из таблицы
         """
 
         query = f'SELECT'
@@ -186,15 +204,14 @@ class DataBase:
         else:
             return self.cursor.fetchone()
 
-    def update(self, table: str, data: [dict, str], where: [dict, str] = None):
+    def update(self, table: str, data: Union[dict, str], where: Union[dict, str, None] = None):
         """
         Обновляет данные в таблице согласно заданным параметрам.
 
-        :param table: название таблицы
-        :param data: данные, которые необходимо обновить
-        :param where: условие WHERE, которое показывает, какие строки нужно обновить
-
-        :return: None
+        Args:
+            table: название таблицы
+            data: данные, которые необходимо обновить
+            where: условие WHERE, которое показывает, какие строки нужно обновить
         """
         query = f'UPDATE `{self.check_table_name(table)}` SET ' \
                 f'{self.prepare_set(data)}'
@@ -211,12 +228,16 @@ class DataBase:
     def __del__(self):
         """
         Удаляет соединение с БД и сам экземляр класса.
-
-        :return: None
         """
         self.connect.close()
         logger.debug('Соединение с БД было закрыто')
         del self
 
-    def get_free_select_execute(self, query):
+    def get_free_select_execute(self, query: str):
+        """
+        Реализует любой SQL-запрос
+
+        Args:
+            query (str): sql-запрос
+        """
         return self.cursor.execute(query)

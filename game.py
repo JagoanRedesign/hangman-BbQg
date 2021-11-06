@@ -1,5 +1,5 @@
+from typing import Union, Tuple
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
 from user import User
 from db.db import DataBase
 from random import randint
@@ -13,9 +13,10 @@ class Game:
 
     def __init__(self, user: User):
         """
-        Инициализиует объект игры. Берет уже созданную игру из БД или создает новую и помещает ее в БД.
+        Инициализирует объект игры. Берет уже созданную игру из БД или создает новую и помещает ее в БД.
 
-        :param user: None
+        Args:
+             user: данные о пользователе
         """
         # пользователь
         self.user = user
@@ -24,7 +25,7 @@ class Game:
         self.db = DataBase()
 
         # запрашивает информацию о существующей игре
-        select = Game.isCreatedGame(self.user)
+        select = Game.exist_created_games(self.user)
 
         # выбранные буквы пользователем
         self.input_letters = ''
@@ -73,16 +74,17 @@ class Game:
         # количество очков за игру
         self.point = 0
 
-    def get_game_content(self) -> (str, InlineKeyboardMarkup, (str, BufferedReader)):
+    def get_game_content(self) -> Tuple[str, InlineKeyboardMarkup, Union[str, BufferedReader]]:
         """
-        Получает инфомацию о статусе игры из БД
+        Получает информацию о статусе игры из БД
 
-        :return: возвращает текст с игрой, клавиатуру и фотографию
+        Return:
+            возвращает текст с игрой, клавиатуру и фотографию
         """
-        print(self.word)
         # создаем объект с изображением.
         # проверяем, есть ли изображение в кэшэ
-        file_id = self.db.select(table='photo', select_data='file_id',
+        file_id = self.db.select(table='photo',
+                                 select_data='file_id',
                                  where={'photo': f'image/{8 - self.lost_health}.png'})
         if file_id:
             # если есть, берем идентификатор изображения
@@ -118,12 +120,13 @@ class Game:
                 word += '◻️'
         return word
 
-    def _get_keyboard_for_game(self):
+    def _get_keyboard_for_game(self) -> InlineKeyboardMarkup:
         """
         Генерирует клавиатуру для игры на основе уже выбираемых букв.
-        Помечает их соответсвующими маркерами
+        Помечает их соответствующими маркерами
 
-        :return: клавиатура
+        Return:
+            клавиатура
         """
         # создаем клавиатуру
         keyboard = InlineKeyboardMarkup()
@@ -158,12 +161,16 @@ class Game:
 
         return keyboard
 
-    def press_button(self, button: str):
+    def press_button(self, button: str) -> Tuple[int, str]:
         """
         Функция, вызываемая при выборе буквы пользователем
 
-        :param button: callback.data кнопки с буквой
-        :return: None
+        Args:
+            button: callback.data кнопки с буквой
+        Return:
+            int: целочисленный статус информирующий о правильном или неправильном угадывании буквы и о возможности
+                 продолжать игру на основе оставшихся жизней.
+            str: текстовое обозначение статуса
         """
         # берем букву из кэллбэк-даты (она у нас находится после ':')
         letter = button.split(':')[1]
@@ -216,12 +223,14 @@ class Game:
         return -1, 'Неверная буква!'
 
     @staticmethod
-    def isCreatedGame(user: User) -> (list, False):
+    def exist_created_games(user: User) -> Union[list, bool]:
         """
         Функция проверяем, есть ли у пользователя созданные игры.
-        :param user: пользователь
 
-        :return: False - созданных игр нет; list - с самой игрой иначе
+        Args:
+            user: пользователь
+        Return:
+            False - созданных игр нет; list - с самой игрой иначе
         """
         db = DataBase()
         select = db.select(
@@ -234,7 +243,10 @@ class Game:
     def _get_where_my_game(user: User) -> dict:
         """
         Возвращает словарь для запроса в БД для поиска игры
-        :param user: пользователь
-        :return: словарь для запроса WHERe
+
+        Args:
+            user: пользователь
+        Return:
+            словарь для запроса WHERE
         """
         return {'user_id': user.user_id, 'status': 0}

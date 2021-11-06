@@ -1,8 +1,15 @@
+from typing import Union
 from db.db import DataBase
 from io import BufferedReader
 
 
-def get_image(image: (str, BufferedReader)):
+def get_image(image: Union[str, BufferedReader]):
+    """
+    Получает идентификатор фото для отправки сообщения
+
+    Args:
+        image: расположение файла с изображением
+    """
     db = DataBase()
     file_id = db.select(table='photo', select_data='file_id', where={'photo': image})
     if file_id:

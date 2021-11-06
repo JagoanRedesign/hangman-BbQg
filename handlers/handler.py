@@ -1,5 +1,5 @@
+from typing import Union, Optional
 from aiogram.types import Message, InlineKeyboardMarkup, CallbackQuery
-
 from image import get_image
 from text import text
 from handlers import handler_decorates
@@ -13,9 +13,11 @@ from io import BufferedReader
 
 
 async def send_photo(
-        message: Message, caption: str,
-        photo: (str, BufferedReader),
-        keyboard: (InlineKeyboardMarkup, ReplyKeyboardMarkup)) -> bool:
+        message: Message,
+        caption: str,
+        photo: Union[str, BufferedReader],
+        keyboard: Union[InlineKeyboardMarkup, ReplyKeyboardMarkup]
+) -> bool:
     """
     Отправляет сообщение с изображением и при необходимости кэширует его
 
@@ -36,9 +38,11 @@ async def send_photo(
 
 
 async def edit_media(
-        message: Message, caption: str,
-        photo: (str, BufferedReader),
-        keyboard: (InlineKeyboardMarkup, ReplyKeyboardMarkup) = None) -> bool:
+        message: Message,
+        caption: str,
+        photo: Union[str, BufferedReader],
+        keyboard: Union[InlineKeyboardMarkup, ReplyKeyboardMarkup, None] = None
+) -> bool:
     """
     Отправляет сообщение с изображением и при необходимости кэширует его
 
@@ -75,7 +79,7 @@ def cashing_photo(photo, sent) -> bool:
     return False
 
 
-@handler_decorates.get_user
+@handler_decorates.get_user_by_message
 async def start_game(message: Message, user: User):
     """
     Запуск игры. Присылает пользователю игру.
@@ -89,7 +93,7 @@ async def start_game(message: Message, user: User):
     await send_photo(message=message, caption=msg, keyboard=keyboard, photo=photo)
 
 
-@handler_decorates.get_user
+@handler_decorates.get_user_by_message
 async def show_records(message: Message, user: User):
     db = DataBase()
     my_point = db.select(table='games', select_data='sum(point)', where={'user_id': user.user_id})[0]
@@ -107,7 +111,7 @@ async def show_records(message: Message, user: User):
     await message.answer(msg)
 
 
-@handler_decorates.get_user
+@handler_decorates.get_user_by_message
 async def call_friends(message: Message, user: User):
     """
     Присылает пользователю сообщение с его рефеальной ссылкой
@@ -123,7 +127,7 @@ async def call_friends(message: Message, user: User):
     await message.answer(msg)
 
 
-@handler_decorates.get_user
+@handler_decorates.get_user_by_message
 async def get_another_message(message: Message, *args, **kwargs):
     """
     Сообщение, которое реагирует на нажатие любых клавиш кроме кнопок на клавиатуре.
@@ -150,7 +154,7 @@ async def get_another_message(message: Message, *args, **kwargs):
 
 @handler_decorates.get_user_by_callback
 async def press_button(callback: CallbackQuery, user: User):
-    if Game.isCreatedGame(user):
+    if Game.exist_created_games(user):
 
         game = Game(user=user)
         code, ntf = game.press_button(callback.data)
